@@ -210,7 +210,7 @@ export const endMeeting = async (req, res) => {
     const { sid } = req.body; // Get sid from the request body
 
     // Call the getDataBySid function to fetch data by sid
-    const dataResponse = await axios.get(`http://localhost:5000/api/myData/sid/${sid}`);
+    const dataResponse = await axios.get(`https://aesthetics-backend.onrender.com/api/myData/sid/${sid}`);
     const data = dataResponse.data;
 
     // Extract fileName
@@ -222,7 +222,7 @@ export const endMeeting = async (req, res) => {
     };
 
     // Send POST request to /api/vide/upload
-    const uploadResponse = await axios.post('http://localhost:5000/api/video/upload', payload, {
+    const uploadResponse = await axios.post('https://aesthetics-backend.onrender.com/api/video/upload', payload, {
       headers: {
         'Content-Type': 'application/json',
       },
