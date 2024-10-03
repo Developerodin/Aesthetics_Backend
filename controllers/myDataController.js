@@ -146,6 +146,51 @@ export const getDataById = async (req, res) => {
   }
 };
 
+export const getDataBySid = async (req, res) => {
+  try {
+    const { sid } = req.params;  // Get sid from the request parameters
+    const data = await MyData.findOne({ sid }); // Fetch data using sid
+
+    if (!data) {
+      return res.status(404).json({ message: "Data not found" });
+    }
+
+    // Prepare authorization credentials
+    const customerKey = "19a1e3a14f1a4c37be0cd382b5c8351a"; // Replace with your customer ID
+    const customerSecret = "14af535508b943cabf8f56da50f93488"; // Replace with your customer secret
+    const plainCredential = `${customerKey}:${customerSecret}`;
+    const encodedCredential = Buffer.from(plainCredential).toString("base64");
+    const authorizationField = `Basic ${encodedCredential}`;
+
+    // Construct the Agora API URL
+    const agoraUrl = `https://api.agora.io/v1/apps/${data.appId}/cloud_recording/resourceid/${data.resourceId}/sid/${data.sid}/mode/mix/query`;
+
+    // Send GET request to Agora API
+    const agoraResponse = await axios.get(agoraUrl, {
+      headers: {
+        Authorization: authorizationField,
+        "Content-Type": "application/json",
+      },
+    });
+
+    // Extract fileList from the response
+    const fileList = agoraResponse.data.serverResponse.fileList;
+
+    // Save the fileName to the database if needed
+    data.fileName = fileList;  // Assuming you want to add this to the existing data
+    await data.save();  // Save the updated data back to the database
+
+    return res.status(200).json({
+      ...data._doc,
+      agoraUrl,
+      fileName: fileList, // Add fileList as fileName in the response
+    });
+  } catch (error) {
+    console.error("Error in getDataBySid:", error.message);
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 export const deleteData = async (req, res) => {
   try {
     const data = await MyData.findByIdAndDelete(req.params.id);
@@ -159,3 +204,37 @@ export const deleteData = async (req, res) => {
       .json({ message: "Server error", error: error.message });
   }
 };
+
+export const endMeeting = async (req, res) => {
+  try {
+    const { sid } = req.body; // Get sid from the request body
+
+    // Call the getDataBySid function to fetch data by sid
+    const dataResponse = await axios.get(`http://localhost:5000/api/myData/sid/${sid}`);
+    const data = dataResponse.data;
+
+    // Extract fileName
+    const fileName = data.fileName;
+
+    // Prepare the payload for the POST request
+    const payload = {
+      fileName: fileName,
+    };
+
+    // Send POST request to /api/vide/upload
+    const uploadResponse = await axios.post('http://localhost:5000/api/video/upload', payload, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return res.status(200).json({
+      message: "Meeting ended successfully",
+      uploadResponse: uploadResponse.data, // Include response from upload endpoint if needed
+    });
+  } catch (error) {
+    console.error("Error in endMeeting:", error.message);
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
