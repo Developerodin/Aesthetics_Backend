@@ -7,6 +7,7 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
+import Transcription from '../models/transcriptionModel.js';
 
 dotenv.config();
 
@@ -273,5 +274,49 @@ const uploadVideo = async (req, res) => {
   }
 };
 
+// Function to get all transcriptions
+const getAllData = async (req, res) => {
+  try {
+    const transcriptions = await Transcription.find();
+    res.status(200).json(transcriptions);
+  } catch (error) {
+    console.error('Error fetching all transcriptions:', error);
+    res.status(500).json({ error: 'Failed to fetch transcriptions' });
+  }
+};
 
-export  {uploadVideo};
+// Function to get a transcription by ID
+const getById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const transcription = await Transcription.findById(id);
+    if (!transcription) {
+      return res.status(404).json({ message: 'Transcription not found' });
+    }
+    res.status(200).json(transcription);
+  } catch (error) {
+    console.error('Error fetching transcription by ID:', error);
+    res.status(500).json({ error: 'Failed to fetch transcription' });
+  }
+};
+
+// Function to delete a transcription by ID
+const deleteById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const transcription = await Transcription.findByIdAndDelete(id);
+    if (!transcription) {
+      return res.status(404).json({ message: 'Transcription not found' });
+    }
+    res.status(200).json({ message: 'Transcription deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting transcription by ID:', error);
+    res.status(500).json({ error: 'Failed to delete transcription' });
+  }
+};
+
+
+
+export  {uploadVideo ,getAllData ,getById ,deleteById} ;

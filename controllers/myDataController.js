@@ -208,18 +208,24 @@ export const deleteData = async (req, res) => {
 export const endMeeting = async (req, res) => {
   try {
     const { sid } = req.body; // Get sid from the request body
+    console.log("Received sid:", sid);
 
     // Call the getDataBySid function to fetch data by sid
+    console.log(`Fetching data for sid: ${sid}`);
     const dataResponse = await axios.get(`https://aesthetics-backend.onrender.com/api/myData/sid/${sid}`);
+    console.log("Data fetched from getDataBySid:", dataResponse.data);
+
     const data = dataResponse.data;
 
     // Extract fileName
     const fileName = data.fileName;
+    console.log("Extracted fileName:", fileName);
 
     // Prepare the payload for the POST request
     const payload = {
       fileName: fileName,
     };
+    console.log("Payload to be sent to video/upload:", payload);
 
     // Send POST request to /api/vide/upload
     const uploadResponse = await axios.post('https://aesthetics-backend.onrender.com/api/video/upload', payload, {
@@ -227,6 +233,7 @@ export const endMeeting = async (req, res) => {
         'Content-Type': 'application/json',
       },
     });
+    console.log("Response from video/upload:", uploadResponse.data);
 
     return res.status(200).json({
       message: "Meeting ended successfully",
@@ -237,4 +244,5 @@ export const endMeeting = async (req, res) => {
     return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
