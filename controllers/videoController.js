@@ -256,10 +256,21 @@ const uploadVideo = async (req, res) => {
 
     // Clean up .ts files after processing
     tsFiles.forEach(file => fs.unlinkSync(file));
+
+    // Step 6: Delete the audio file after transcription
+    const audioFilePath = path.join(__dirname, '../uploads', `${fileName}.mp3`);
+    if (fs.existsSync(audioFilePath)) {
+      fs.unlinkSync(audioFilePath);
+      console.log('Audio file deleted:', audioFilePath);
+    } else {
+      console.log('Audio file not found for deletion:', audioFilePath);
+    }
+
   } catch (error) {
     console.error('Error uploading or processing video:', error);
     res.status(500).json({ error: 'Failed to upload and process video' });
   }
 };
+
 
 export  {uploadVideo};
