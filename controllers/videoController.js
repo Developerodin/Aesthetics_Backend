@@ -236,22 +236,23 @@ const uploadVideo = async (req, res) => {
     const transcription = await convertAudioToTextGemini(audioBuffer, fileName);
 
     // Step 4: Save transcription to 'transcriptions' folder
-    const transcriptionFolder = path.join(__dirname, '../transcriptions');
-    if (!fs.existsSync(transcriptionFolder)) {
-      fs.mkdirSync(transcriptionFolder);
-    }
+    // const transcriptionFolder = path.join(__dirname, '../transcriptions');
+    // if (!fs.existsSync(transcriptionFolder)) {
+    //   fs.mkdirSync(transcriptionFolder);
+    // }
 
-    const transcriptionFilePath = path.join(
-      transcriptionFolder,
-      `${path.basename(fileName, path.extname(fileName))}.txt`
-    );
-    fs.writeFileSync(transcriptionFilePath, transcription, 'utf8'); 
+    // const transcriptionFilePath = path.join(
+    //   transcriptionFolder,
+    //   `${path.basename(fileName, path.extname(fileName))}.txt`
+    // );
+    // fs.writeFileSync(transcriptionFilePath, transcription, 'utf8'); 
+    const newTranscription = new Transcription({ text: transcription });
+    await newTranscription.save();
 
     // Step 5: Send response with transcription path
     res.status(201).json({
       message: 'Video downloaded, audio extracted, and transcription generated successfully',
-      transcriptionFilePath,
-      transcription,
+      transcription: newTranscription,
     });
 
     // Clean up .ts files after processing
