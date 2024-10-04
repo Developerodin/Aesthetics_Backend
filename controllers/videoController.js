@@ -53,7 +53,7 @@ const getPresignedUrl = async (fileName) => {
   }
 };
 
-// Function to download the .m3u8 file
+// Function to download the .m3u8  
 const downloadM3U8File = async (fileName, outputLocationPath) => {
   const presignedUrl = await getPresignedUrl(fileName);
   const writer = fs.createWriteStream(outputLocationPath);
@@ -220,7 +220,7 @@ const uploadVideo = async (req, res) => {
           }
         }
         
-        throw error; // If it's not an expired request error, throw it
+        throw error; 
       }
     }
 
@@ -236,17 +236,6 @@ const uploadVideo = async (req, res) => {
     // Step 3: Convert audio to text using Google Gemini
     const transcription = await convertAudioToTextGemini(audioBuffer, fileName);
 
-    // Step 4: Save transcription to 'transcriptions' folder
-    // const transcriptionFolder = path.join(__dirname, '../transcriptions');
-    // if (!fs.existsSync(transcriptionFolder)) {
-    //   fs.mkdirSync(transcriptionFolder);
-    // }
-
-    // const transcriptionFilePath = path.join(
-    //   transcriptionFolder,
-    //   `${path.basename(fileName, path.extname(fileName))}.txt`
-    // );
-    // fs.writeFileSync(transcriptionFilePath, transcription, 'utf8'); 
     const newTranscription = new Transcription({ text: transcription });
     await newTranscription.save();
 
@@ -256,7 +245,7 @@ const uploadVideo = async (req, res) => {
       transcription: newTranscription,
     });
 
-    // Clean up .ts files after processing
+    
     tsFiles.forEach(file => fs.unlinkSync(file));
 
     // Step 6: Delete the audio file after transcription

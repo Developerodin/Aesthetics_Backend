@@ -5,8 +5,9 @@ const router = express.Router();
 
 router.post('/create-data', createDataWithUrl);
 router.get('/', getAllData);
-router.get('/:id', getDataById);
 router.get('/sid/:sid', getDataBySid);
+router.get('/:id', getDataById);
+
 router.post('/end-meeting', endMeeting);
 router.delete('/:id', deleteData);
 
