@@ -306,6 +306,21 @@ const deleteById = async (req, res) => {
   }
 };
 
+const getLatestTranscription = async (req, res) => {
+  try {
+    // Find the latest transcription by sorting `createdAt` in descending order
+    const latestTranscription = await Transcription.findOne().sort({ createdAt: -1 });
+
+    if (!latestTranscription) {
+      return res.status(404).json({ message: 'No transcription found' });
+    }
+
+    // Return the latest transcription
+    res.status(200).json(latestTranscription);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching latest transcription', error: err.message });
+  }
+};
 
 
-export  {uploadVideo ,getAllData ,getById ,deleteById} ;
+export  {uploadVideo ,getAllData ,getById ,deleteById ,getLatestTranscription} ;
