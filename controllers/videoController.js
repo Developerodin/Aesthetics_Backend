@@ -194,7 +194,7 @@ const convertAudioToTextGemini = async (audioBuffer, fileName) => {
 };
 
 // Main function to handle the upload and process the video
-const uploadVideo = async (req, res) => {
+const uploadVideo = async (req, res, sid) => {
   try {
     const { fileName } = req.body;
 
@@ -206,21 +206,21 @@ const uploadVideo = async (req, res) => {
     while (retryCount < maxRetries) {
       try {
         tsFiles = await processM3U8(fileName);
-        break; // If successful, exit the loop
+        break;
       } catch (error) {
         console.error(`Error processing M3U8 (attempt ${retryCount + 1}):`, error);
 
         if (error.response && error.response.status === 403) {
-          const errorBody = error.response.data.toString(); // Convert to string if it's not already
+          const errorBody = error.response.data.toString();
           if (errorBody.includes('Request has expired')) {
             console.log('Pre-signed URL expired, regenerating...');
-            await getPresignedUrl(fileName); // Regenerate the pre-signed URL
+            await getPresignedUrl(fileName);
             retryCount++;
-            continue; // Retry the loop
+            continue;
           }
         }
-        
-        throw error; 
+
+        throw error;
       }
     }
 
@@ -236,19 +236,22 @@ const uploadVideo = async (req, res) => {
     // Step 3: Convert audio to text using Google Gemini
     const transcription = await convertAudioToTextGemini(audioBuffer, fileName);
 
-    const newTranscription = new Transcription({ text: transcription });
+    // Step 4: Create new transcription and save with sid
+    const newTranscription = new Transcription({
+      text: transcription,
+      sid: sid,  // Add sid to transcription
+    });
     await newTranscription.save();
 
-    // Step 5: Send response with transcription path
+    // Step 5: Send response with transcription
     res.status(201).json({
       message: 'Video downloaded, audio extracted, and transcription generated successfully',
       transcription: newTranscription,
     });
 
-    
     tsFiles.forEach(file => fs.unlinkSync(file));
 
-    // Step 6: Delete the audio file after transcription
+    // Step 6: Delete audio file after transcription
     const audioFilePath = path.join(__dirname, '../uploads', `${fileName}.mp3`);
     if (fs.existsSync(audioFilePath)) {
       fs.unlinkSync(audioFilePath);
@@ -262,6 +265,7 @@ const uploadVideo = async (req, res) => {
     res.status(500).json({ error: 'Failed to upload and process video' });
   }
 };
+
 
 // Function to get all transcriptions
 const getAllData = async (req, res) => {

@@ -1,7 +1,8 @@
 import MyData from "../models/MyData.js";
+import { uploadVideo } from "./videoController.js";
+import Transcription from "../models/transcriptionModel.js";
 
 
-import axios from "axios";
 
 export const createDataWithUrl = async (req, res) => {
   try {
@@ -83,84 +84,75 @@ export const createDataWithUrl = async (req, res) => {
     }
   };
 
-let ongoingProcesses = {}; // To track ongoing processes and cache responses for each SID
 
-export const endMeeting = async (req, res) => {
-  try {
-    const { sid, fileName, hostStatus } = req.body;
-    console.log("Received sid, fileName, and hostStatus:", { sid, fileName, hostStatus });
-
-    // Check if a request with this sid is already being processed or completed
-    if (ongoingProcesses[sid] && ongoingProcesses[sid].response) {
-      console.log(`Meeting for sid: ${sid} already processed. Returning cached response.`);
-      return res.status(200).json(ongoingProcesses[sid].response);
-    }
-
-    // If hostStatus is false, wait for the host to finish processing
-    if (!hostStatus) {
-      if (ongoingProcesses[sid] && ongoingProcesses[sid].processing) {
-        console.log(`Meeting for sid: ${sid} is in progress. Waiting for host's response.`);
-        return res.status(202).json({ message: "Waiting for host to finish processing." });
-      } else {
-        return res.status(400).json({ message: "No host has initiated the process yet." });
-      }
-    }
-
-    // If hostStatus is true, the host should process the request
-    if (hostStatus) {
-      // Initialize the process for this sid (mark it as being processed)
-      ongoingProcesses[sid] = { processing: true, response: null };
-
-      // Find data by SID
+  export const endMeeting = async (req, res) => {
+    try {
+      const { sid, fileName, hostStatus } = req.body;
+      console.log("Received sid, fileName, and hostStatus:", { sid, fileName, hostStatus });
+  
+      // Check if a request with this sid exists in MyData
       const data = await MyData.findOne({ sid });
       if (!data) {
-        // Reset the process cache for this SID in case of an error
-        delete ongoingProcesses[sid];
         return res.status(404).json({ message: "Data not found for the given sid" });
       }
-
-      // Update document with the fileName
-      data.fileName = fileName;
-      const updatedData = await data.save();
-      console.log("Document updated with fileName:", updatedData);
-
-      // Prepare payload for the video upload
-      const payload = {
-        fileName: fileName,
-      };
-      console.log("Payload to be sent to video/upload:", payload);
-
-      // Send request to the video upload endpoint
-      const uploadResponse = await axios.post('https://aesthetics-backend.onrender.com/api/video/upload', payload, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      console.log("Response from video/upload:", uploadResponse.data);
-
-      // Create the final response
-      const response = {
-        message: "Meeting ended and file uploaded successfully",
-        uploadResponse: uploadResponse.data,
-      };
-
-      // Cache the response so that subsequent requests with the same sid get the same response
-      ongoingProcesses[sid].response = response;
-
-      // After successful processing, return the response
-      return res.status(200).json(response);
+  
+      if (hostStatus) {
+        // If hostStatus is true, process the video and transcription
+        console.log("Host is processing the meeting.");
+        
+        // Update document with the fileName
+        data.fileName = fileName;
+        const updatedData = await data.save();
+        console.log("Document updated with fileName:", updatedData);
+  
+        // Call the uploadVideo function to handle video processing and transcription
+        await uploadVideo(req, res, sid);
+  
+      } else {
+        // If hostStatus is false, check if a transcription already exists for the given sid
+        console.log("Host has not finished processing. Waiting for transcription.");
+  
+        const waitForTranscription = async (sid, maxWaitTime = 120000, interval = 5000) => {
+          let elapsedTime = 0;
+  
+          // Continuously check every interval (5 seconds in this case)
+          while (elapsedTime < maxWaitTime) {
+            const transcription = await Transcription.findOne({ sid });
+            if (transcription) {
+              // If the transcription is found, return it
+              return transcription;
+            }
+  
+            // Wait for the specified interval before checking again
+            await new Promise((resolve) => setTimeout(resolve, interval));
+            elapsedTime += interval;
+          }
+  
+          // If no transcription is found within the maxWaitTime, return null
+          return null;
+        };
+  
+        const transcription = await waitForTranscription(sid);
+  
+        if (transcription) {
+          // Transcription found, send the complete transcription object
+          return res.status(200).json({
+            message: "Transcription found",
+            transcription, // Send the whole transcription object
+          });
+        } else {
+          // Transcription not found after waiting
+          return res.status(404).json({ message: "Transcription not found after waiting for 2 minutes" });
+        }
+      }
+    } catch (error) {
+      console.error("Error in endMeeting:", error.message);
+      return res.status(500).json({ message: "Server error", error: error.message });
     }
-  } catch (error) {
-    // In case of an error, reset the cache for the sid
-    delete ongoingProcesses[req.body.sid];
-    console.error("Error in endMeeting:", error.message);
-    return res.status(500).json({ message: "Server error", error: error.message });
-  } finally {
-    // Ensure the process cache is cleared after completion (success or error)
-    delete ongoingProcesses[req.body.sid];
-  }
-};
-
+  };
+  
+  
+  
   
   
 
