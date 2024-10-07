@@ -83,22 +83,34 @@ export const createDataWithUrl = async (req, res) => {
     }
   };
 
-  let ongoingProcesses = {}; // To track ongoing processes and cache responses for each SID
+let ongoingProcesses = {}; // To track ongoing processes and cache responses for each SID
 
-  export const endMeeting = async (req, res) => {
-    try {
-      const { sid, fileName } = req.body;
-      console.log("Received sid and fileName:", { sid, fileName });
-  
-      // Check if a request with this sid is already being processed or completed
-      if (ongoingProcesses[sid]) {
-        console.log(`Meeting for sid: ${sid} is already being processed or completed. Returning cached response.`);
-        return res.status(200).json(ongoingProcesses[sid].response);
+export const endMeeting = async (req, res) => {
+  try {
+    const { sid, fileName, hostStatus } = req.body;
+    console.log("Received sid, fileName, and hostStatus:", { sid, fileName, hostStatus });
+
+    // Check if a request with this sid is already being processed or completed
+    if (ongoingProcesses[sid] && ongoingProcesses[sid].response) {
+      console.log(`Meeting for sid: ${sid} already processed. Returning cached response.`);
+      return res.status(200).json(ongoingProcesses[sid].response);
+    }
+
+    // If hostStatus is false, wait for the host to finish processing
+    if (!hostStatus) {
+      if (ongoingProcesses[sid] && ongoingProcesses[sid].processing) {
+        console.log(`Meeting for sid: ${sid} is in progress. Waiting for host's response.`);
+        return res.status(202).json({ message: "Waiting for host to finish processing." });
+      } else {
+        return res.status(400).json({ message: "No host has initiated the process yet." });
       }
-  
+    }
+
+    // If hostStatus is true, the host should process the request
+    if (hostStatus) {
       // Initialize the process for this sid (mark it as being processed)
       ongoingProcesses[sid] = { processing: true, response: null };
-  
+
       // Find data by SID
       const data = await MyData.findOne({ sid });
       if (!data) {
@@ -106,18 +118,18 @@ export const createDataWithUrl = async (req, res) => {
         delete ongoingProcesses[sid];
         return res.status(404).json({ message: "Data not found for the given sid" });
       }
-  
+
       // Update document with the fileName
       data.fileName = fileName;
       const updatedData = await data.save();
       console.log("Document updated with fileName:", updatedData);
-  
+
       // Prepare payload for the video upload
       const payload = {
         fileName: fileName,
       };
       console.log("Payload to be sent to video/upload:", payload);
-  
+
       // Send request to the video upload endpoint
       const uploadResponse = await axios.post('https://aesthetics-backend.onrender.com/api/video/upload', payload, {
         headers: {
@@ -125,28 +137,30 @@ export const createDataWithUrl = async (req, res) => {
         },
       });
       console.log("Response from video/upload:", uploadResponse.data);
-  
+
       // Create the final response
       const response = {
         message: "Meeting ended and file uploaded successfully",
         uploadResponse: uploadResponse.data,
       };
-  
+
       // Cache the response so that subsequent requests with the same sid get the same response
       ongoingProcesses[sid].response = response;
-  
+
       // After successful processing, return the response
       return res.status(200).json(response);
-    } catch (error) {
-      // In case of an error, reset the cache for the sid
-      delete ongoingProcesses[req.body.sid];
-      console.error("Error in endMeeting:", error.message);
-      return res.status(500).json({ message: "Server error", error: error.message });
-    } finally {
-      // Ensure the process cache is cleared after completion (success or error)
-      delete ongoingProcesses[req.body.sid];
     }
-  };
+  } catch (error) {
+    // In case of an error, reset the cache for the sid
+    delete ongoingProcesses[req.body.sid];
+    console.error("Error in endMeeting:", error.message);
+    return res.status(500).json({ message: "Server error", error: error.message });
+  } finally {
+    // Ensure the process cache is cleared after completion (success or error)
+    delete ongoingProcesses[req.body.sid];
+  }
+};
+
   
   
 

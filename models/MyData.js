@@ -7,6 +7,7 @@ const myDataSchema = new mongoose.Schema({
   uid: { type: String, required: true },
   appId: { type: String, required: true },
   fileName: { type: String, required: false },
+  hostStatus: { type: Boolean, default: false },
 }, { timestamps: true });
 
 const MyData = mongoose.model('MyData', myDataSchema);
