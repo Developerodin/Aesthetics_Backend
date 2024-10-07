@@ -83,28 +83,27 @@ export const createDataWithUrl = async (req, res) => {
     }
   };
 
-  // Cache to store ongoing processing for each sid
-  let processingCount = 0; // Initialize count as 0 (no requests being processed)
+  let ongoingProcesses = {}; // To track ongoing processes and cache responses for each SID
 
   export const endMeeting = async (req, res) => {
     try {
-      // Check if a request is already being processed
-      if (processingCount > 0) {
-        return res.status(400).json({ message: "Work in progress. Please wait until the current request is completed." });
-      }
-  
-      // Increment the count to 1, indicating a request is being processed
-      processingCount = 1;
-      console.log("Processing started, count set to 1");
-  
       const { sid, fileName } = req.body;
       console.log("Received sid and fileName:", { sid, fileName });
+  
+      // Check if a request with this sid is already being processed or completed
+      if (ongoingProcesses[sid]) {
+        console.log(`Meeting for sid: ${sid} is already being processed or completed. Returning cached response.`);
+        return res.status(200).json(ongoingProcesses[sid].response);
+      }
+  
+      // Initialize the process for this sid (mark it as being processed)
+      ongoingProcesses[sid] = { processing: true, response: null };
   
       // Find data by SID
       const data = await MyData.findOne({ sid });
       if (!data) {
-        // Reset count to 0 before returning error
-        processingCount = 0;
+        // Reset the process cache for this SID in case of an error
+        delete ongoingProcesses[sid];
         return res.status(404).json({ message: "Data not found for the given sid" });
       }
   
@@ -127,21 +126,28 @@ export const createDataWithUrl = async (req, res) => {
       });
       console.log("Response from video/upload:", uploadResponse.data);
   
-      // Reset the count back to 0 after successful processing
-      processingCount = 0;
-      console.log("Processing completed, count reset to 0");
-  
-      return res.status(200).json({
+      // Create the final response
+      const response = {
         message: "Meeting ended and file uploaded successfully",
         uploadResponse: uploadResponse.data,
-      });
+      };
+  
+      // Cache the response so that subsequent requests with the same sid get the same response
+      ongoingProcesses[sid].response = response;
+  
+      // After successful processing, return the response
+      return res.status(200).json(response);
     } catch (error) {
-      // Reset count to 0 in case of any errors
-      processingCount = 0;
+      // In case of an error, reset the cache for the sid
+      delete ongoingProcesses[req.body.sid];
       console.error("Error in endMeeting:", error.message);
       return res.status(500).json({ message: "Server error", error: error.message });
+    } finally {
+      // Ensure the process cache is cleared after completion (success or error)
+      delete ongoingProcesses[req.body.sid];
     }
   };
+  
   
 
   
