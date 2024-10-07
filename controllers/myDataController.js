@@ -91,10 +91,7 @@ export const createDataWithUrl = async (req, res) => {
       console.log("Received sid, fileName, and hostStatus:", { sid, fileName, hostStatus });
   
       // Check if a request with this sid exists in MyData
-      const data = await MyData.findOne({ sid });
-      if (!data) {
-        return res.status(404).json({ message: "Data not found for the given sid" });
-      }
+     
   
       if (hostStatus) {
         // If hostStatus is true, process the video and transcription

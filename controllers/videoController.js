@@ -234,7 +234,9 @@ const uploadVideo = async (req, res, sid) => {
     const audioBuffer = await mergeAndExtractAudio(tsFiles, fileName);
 
     // Step 3: Convert audio to text using Google Gemini
-    const transcription = await convertAudioToTextGemini(audioBuffer, fileName);
+    console.log('Starting audio to text conversion using Google Gemini...');
+const transcription = await convertAudioToTextGemini(audioBuffer, fileName);
+console.log('Audio to text conversion completed:', transcription);
 
     // Step 4: Create new transcription and save with sid
     const newTranscription = new Transcription({
