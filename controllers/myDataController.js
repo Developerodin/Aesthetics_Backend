@@ -125,7 +125,7 @@ export const createDataWithUrl = async (req, res) => {
           console.log("No transcription found immediately, waiting for transcription...");
   
           // Wait logic for transcription (as in your original code)
-          const waitForTranscription = async (sid, maxWaitTime = 120000, interval = 5000) => {
+          const waitForTranscription = async (sid, maxWaitTime = 220000, interval = 20000) => {
             let elapsedTime = 0;
   
             // Continuously check every interval (5 seconds in this case)
