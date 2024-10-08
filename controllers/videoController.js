@@ -194,7 +194,7 @@ const convertAudioToTextGemini = async (audioBuffer, fileName) => {
 };
 
 // Main function to handle the upload and process the video
-const uploadVideo = async (req, res, sid) => {
+const uploadVideo = async (req, res, sid,dataid) => {
   try {
     const { fileName } = req.body;
 
@@ -241,7 +241,8 @@ console.log('Audio to text conversion completed:', transcription);
     // Step 4: Create new transcription and save with sid
     const newTranscription = new Transcription({
       text: transcription,
-      sid: sid,  // Add sid to transcription
+      sid: sid,
+      dataid:dataid,  // Add sid to transcription
     });
     await newTranscription.save();
 

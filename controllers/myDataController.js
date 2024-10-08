@@ -87,11 +87,11 @@ export const createDataWithUrl = async (req, res) => {
 
   export const endMeeting = async (req, res) => {
     try {
-      const { sid, fileName, hostStatus } = req.body;
+      const { sid, fileName, hostStatus,dataid } = req.body;
       console.log("Received sid, fileName, and hostStatus:", { sid, fileName, hostStatus });
   
       // Check if a request with this sid exists in MyData
-      const data = await MyData.findOne({ sid });
+      const data = await MyData.findOne({ dataid });
       if (!data) {
         return res.status(404).json({ message: "Data not found" });
       }
@@ -106,13 +106,13 @@ export const createDataWithUrl = async (req, res) => {
         console.log("Document updated with fileName:", updatedData);
   
         // Call the uploadVideo function to handle video processing and transcription
-        await uploadVideo(req, res, sid);
+        await uploadVideo(req, res, sid, dataid);
   
       } else {
         // If hostStatus is false, check for an existing transcription first
         console.log("Host has not finished processing. Checking for transcription.");
   
-        const transcription = await Transcription.findOne({ sid });
+        const transcription = await Transcription.findOne({ dataid });
   
         if (transcription) {
           // If the transcription is found, return it
@@ -125,12 +125,12 @@ export const createDataWithUrl = async (req, res) => {
           console.log("No transcription found immediately, waiting for transcription...");
   
           // Wait logic for transcription (as in your original code)
-          const waitForTranscription = async (sid, maxWaitTime = 220000, interval = 20000) => {
+          const waitForTranscription = async (dataid, maxWaitTime = 220000, interval = 20000) => {
             let elapsedTime = 0;
   
             // Continuously check every interval (5 seconds in this case)
             while (elapsedTime < maxWaitTime) {
-              const transcription = await Transcription.findOne({ sid });
+              const transcription = await Transcription.findOne({ dataid });
               if (transcription) {
                 // If the transcription is found, return it
                 return transcription;
@@ -145,7 +145,7 @@ export const createDataWithUrl = async (req, res) => {
             return null;
           };
   
-          const transcription = await waitForTranscription(sid);
+          const transcription = await waitForTranscription(dataid);
   
           if (transcription) {
             // Transcription found, send the complete transcription object
