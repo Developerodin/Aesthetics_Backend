@@ -91,7 +91,7 @@ export const createDataWithUrl = async (req, res) => {
       console.log("Received sid, fileName, and hostStatus:", { sid, fileName, hostStatus,dataid });
   
       // Check if a request with this sid exists in MyData
-      const data = await MyData.findOne({ dataid });
+      const data = await MyData.findOne({ sid });
       if (!data) {
         return res.status(404).json({ message: "Data not found" });
       }
