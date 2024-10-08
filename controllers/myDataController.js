@@ -88,7 +88,7 @@ export const createDataWithUrl = async (req, res) => {
   export const endMeeting = async (req, res) => {
     try {
       const { sid, fileName, hostStatus,dataid } = req.body;
-      console.log("Received sid, fileName, and hostStatus:", { sid, fileName, hostStatus });
+      console.log("Received sid, fileName, and hostStatus:", { sid, fileName, hostStatus,dataid });
   
       // Check if a request with this sid exists in MyData
       const data = await MyData.findOne({ dataid });
