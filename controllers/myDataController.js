@@ -91,8 +91,7 @@ export const createDataWithUrl = async (req, res) => {
       console.log("Received sid, fileName, and hostStatus:", { sid, fileName, hostStatus });
   
       // Check if a request with this sid exists in MyData
-      const data = await MyData.findOne
-      ({ sid });
+      const data = await MyData.findOne({ sid });
       if (!data) {
         return res.status(404).json({ message: "Data not found" });
       }
@@ -110,40 +109,54 @@ export const createDataWithUrl = async (req, res) => {
         await uploadVideo(req, res, sid);
   
       } else {
-        // If hostStatus is false, check if a transcription already exists for the given sid
-        console.log("Host has not finished processing. Waiting for transcription.");
+        // If hostStatus is false, check for an existing transcription first
+        console.log("Host has not finished processing. Checking for transcription.");
   
-        const waitForTranscription = async (sid, maxWaitTime = 120000, interval = 5000) => {
-          let elapsedTime = 0;
-  
-          // Continuously check every interval (5 seconds in this case)
-          while (elapsedTime < maxWaitTime) {
-            const transcription = await Transcription.findOne({ sid });
-            if (transcription) {
-              // If the transcription is found, return it
-              return transcription;
-            }
-  
-            // Wait for the specified interval before checking again
-            await new Promise((resolve) => setTimeout(resolve, interval));
-            elapsedTime += interval;
-          }
-  
-          // If no transcription is found within the maxWaitTime, return null
-          return null;
-        };
-  
-        const transcription = await waitForTranscription(sid);
+        const transcription = await Transcription.findOne({ sid });
   
         if (transcription) {
-          // Transcription found, send the complete transcription object
+          // If the transcription is found, return it
+          console.log("Transcription found immediately:", transcription);
           return res.status(200).json({
             message: "Transcription found",
-            transcription, // Send the whole transcription object
+            transcription, // Send the transcription object
           });
         } else {
-          // Transcription not found after waiting
-          return res.status(404).json({ message: "Transcription not found after waiting for 2 minutes" });
+          console.log("No transcription found immediately, waiting for transcription...");
+  
+          // Wait logic for transcription (as in your original code)
+          const waitForTranscription = async (sid, maxWaitTime = 120000, interval = 5000) => {
+            let elapsedTime = 0;
+  
+            // Continuously check every interval (5 seconds in this case)
+            while (elapsedTime < maxWaitTime) {
+              const transcription = await Transcription.findOne({ sid });
+              if (transcription) {
+                // If the transcription is found, return it
+                return transcription;
+              }
+  
+              // Wait for the specified interval before checking again
+              await new Promise((resolve) => setTimeout(resolve, interval));
+              elapsedTime += interval;
+            }
+  
+            // If no transcription is found within the maxWaitTime, return null
+            return null;
+          };
+  
+          const transcription = await waitForTranscription(sid);
+  
+          if (transcription) {
+            // Transcription found, send the complete transcription object
+            return res.status(200).json({
+              message: "Transcription found after waiting",
+              transcription, // Send the whole transcription object
+            });
+          } else {
+            // Transcription not found after waiting
+            return res.status(404).json({ message: "Transcription not found after waiting for 2 minutes" });
+          }
         }
       }
     } catch (error) {
@@ -151,6 +164,7 @@ export const createDataWithUrl = async (req, res) => {
       return res.status(500).json({ message: "Server error", error: error.message });
     }
   };
+  
   
   
   
