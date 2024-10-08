@@ -92,7 +92,7 @@ export const createDataWithUrl = async (req, res) => {
   
       // Check if a request with this sid exists in MyData
       const data = await MyData.findOne({ sid });
-      if (!data) {
+      if (hostStatus && !data) {
         return res.status(404).json({ message: "Data not found" });
       }
   
