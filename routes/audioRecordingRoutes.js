@@ -3,7 +3,11 @@ import express from 'express';
 import upload from '../config/upload.js'; // Import the multer upload middleware
 import { uploadAudio } from '../controllers/audioRecordingController.js'; // Import the controller
 import path from 'path';
+import { fileURLToPath } from 'url';
 import fs from 'fs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
