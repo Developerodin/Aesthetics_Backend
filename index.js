@@ -5,6 +5,7 @@ import audioRoutes from './routes/audioRoutes.js';
 import videoRoutes from './routes/videoRoutes.js';
 import myDataRoutes from './routes/myDataRoutes.js';
 import tokenRoutes from './routes/tokenRoutes.js';
+import audioRecordingRoutes from './routes/audioRecordingRoutes.js';
 import connection from './config/db.js';
 import bodyParser from 'body-parser';
 
@@ -23,6 +24,7 @@ app.use('/api/audio', audioRoutes);
 app.use('/api/video', videoRoutes);
 app.use('/api/myData', myDataRoutes);
 app.use('/api/token', tokenRoutes);
+app.use('/api/audioRecording', audioRecordingRoutes);
 
 app.use('/uploads', express.static('uploads'));
 app.use('/transcriptions', express.static('transcriptions'));
