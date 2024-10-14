@@ -118,3 +118,13 @@ export const getTokensByChannelName = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+export const getAllTokens = async (req, res) => {
+    try {
+      const tokens = await Token.find();
+      res.status(200).json(tokens);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error fetching tokens", error });
+    }
+  };
