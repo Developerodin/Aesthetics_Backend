@@ -1,16 +1,16 @@
 // routes/tokenRoutes.js
 import express from 'express';
-import { generateAndSaveToken, getTokenAndChannelName, updateChannelNameAndToken } from '../controllers/tokenController.js';
+import { updateAllTokens, getTokensByChannelName } from '../controllers/tokenController.js';
 
 const router = express.Router();
 
 // Route to generate and save token
-router.post('/', generateAndSaveToken);
+router.post('/', getTokensByChannelName);
 
 // Route to get token and channel name
-router.get('/', getTokenAndChannelName);
+router.get('/', getTokensByChannelName);
 
 // Route to update channel name and regenerate token
-router.post('/update', updateChannelNameAndToken);
+router.post('/update', updateAllTokens);
 
 export default router;

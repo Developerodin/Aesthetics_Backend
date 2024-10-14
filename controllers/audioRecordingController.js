@@ -145,6 +145,8 @@ export const getTranscriptions = async (req, res) => {
       return res.status(404).json({ message: 'Recording not found' });
     }
 
+    
+
     // Extract transcriptions from the chunks
     const transcriptions = recording.chunks.map(chunk => ({
       startTime: chunk.startTime,
