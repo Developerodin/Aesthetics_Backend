@@ -1,8 +1,12 @@
-// controllers/audioRecordingController.js
 import AudioRecording from '../models/audioRecordingModel.js';
 import path from 'path';
 import fs from 'fs';
 import ffmpeg from 'fluent-ffmpeg';
+import { fileURLToPath } from 'url';
+
+// Recreate __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Controller for uploading and splitting the audio into chunks
 export const uploadAndSplitAudio = async (req, res) => {
@@ -69,6 +73,7 @@ export const uploadAndSplitAudio = async (req, res) => {
   }
 };
 
+// Controller to get audio chunks by recording ID
 export const getAudioChunks = async (req, res) => {
   try {
     const { id } = req.params;
