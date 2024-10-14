@@ -128,3 +128,16 @@ export const getAllTokens = async (req, res) => {
       res.status(500).json({ message: "Error fetching tokens", error });
     }
   };
+
+  export const getLatestToken = async (req, res) => {
+    try {
+      const latestToken = await Token.findOne().sort({ createdAt: -1 }); // Sort by creation date in descending order
+      if (!latestToken) {
+        return res.status(404).json({ message: "No tokens found." });
+      }
+      res.status(200).json(latestToken);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error fetching latest token", error });
+    }
+  };
