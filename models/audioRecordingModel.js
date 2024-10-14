@@ -14,6 +14,10 @@ const chunkSchema = new mongoose.Schema({
     type: Number, // Timestamp (in seconds) indicating the end time of the chunk
     required: true,
   },
+  transcription: {
+    type: String, // Field to store the transcription for the chunk
+    default: "", // Default value can be an empty string
+  },
 });
 
 const audioRecordingSchema = new mongoose.Schema({
